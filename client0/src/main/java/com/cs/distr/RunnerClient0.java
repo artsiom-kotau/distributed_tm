@@ -3,18 +3,10 @@ package com.cs.distr;
 import com.cs.distr.api.ClientZeroServiceImpl;
 import com.cs.distr.api.entity.UserDto;
 import com.cs.distr.shared.api.ClientService;
-import com.cs.distr.shared.api.SomeObject;
 import com.cs.distr.shared.api.entity.UserAccountEntity;
 import com.cs.distr.shared.api.entity.UserEntity;
-import com.cs.distr.shared.api.transaction.store.TidCash;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.MongoClient;
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.data.mongodb.core.MongoOperations;
 
 import java.util.UUID;
 
@@ -27,17 +19,31 @@ public class RunnerClient0 {
         ClientZeroServiceImpl clientService = (ClientZeroServiceImpl) appContext.getBean("zeroService");
         ClientService firstClientService = clientService.getFirstService();
         ClientService secondClientService = clientService.getSecondService();
-        int amount = 50;
+        int amount = 10;
         int i = 0;
-        String uid = UUID.randomUUID().toString();
-        UserDto userDto = new UserDto("someAction_"+uid,"someAction","SomeAction", "someAction@mail.com");
-        String hashString = userDto.getFirstName() + userDto.getLastName() + userDto.getEmail();
-        UserAccountEntity userAccountEntity = new UserAccountEntity(userDto.getUid(), UUID.randomUUID().toString(), UUID.randomUUID().toString(),
-                clientService.hashString(hashString));
 
+        UserAccountEntity userAccountEntity;
+        String hashString;
+
+        String uid = String.valueOf(UUID.randomUUID().getMostSignificantBits());
+        firstClientService.create(new UserEntity(uid,"firstClient","firstClient","firstClient"));
+        firstClientService.delete(new UserEntity(uid,"firstClient","firstClient","firstClient"));
         while(i<amount) {
+            createTest(clientService);
+            updateTest(clientService);
+            deleteTest(clientService);
+            i++;
+        }
+
+        i = 0;
+        uid = String.valueOf(UUID.randomUUID().getMostSignificantBits());
+        UserDto userDto = new UserDto("someAction_"+uid,"someAction","SomeAction", "someAction@mail.com");
+        while(i<amount) {
+            hashString = userDto.getFirstName() + userDto.getLastName() + userDto.getEmail();
+            userAccountEntity = new UserAccountEntity(userDto.getUid(), UUID.randomUUID().toString(), UUID.randomUUID().toString(),
+                    clientService.hashString(hashString));
             userAccountEntity.setId("success_"+i);
-            secondClientService.someAction(userAccountEntity,false);
+            secondClientService.someAction(userAccountEntity, false);
             userAccountEntity.setId("negative_"+i);
             try {
                 secondClientService.someAction(userAccountEntity,true);
@@ -46,16 +52,7 @@ public class RunnerClient0 {
             }
             i++;
         }
-        /*while(i<amount) {
-            String uid = String.valueOf(UUID.randomUUID().getMostSignificantBits());
-            firstClientService.create(new UserEntity(uid,"firstClient","firstClient","firstClient"));
-            createTest(clientService);
-            updateTest(clientService);
-            deleteTest(clientService);
-            firstClientService.delete(new UserEntity(uid,"firstClient","firstClient","firstClient"));
-            i++;
-        } */
-        //System.out.println("all done");
+        System.out.println("all done");
     }
 
     private static void createTest(ClientZeroServiceImpl clientService) {
