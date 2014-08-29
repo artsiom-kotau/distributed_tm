@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+    <aop:aspectj-autoproxy/>
+    <tx:jta-transaction-manager/>
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <bean id="rmiTransactionManager" class="com.cs.distr.shared.api.remote.ExtHttpInvokerProxyFactoryBean">
+        <property name="serviceUrl" value="http://localhost:9000/remoting/transactionManager"/>
+        <property name="serviceInterface" value="javax.transaction.TransactionManager"/>
+    </bean>
+
+    <bean id="rmiUserTransaction" class="com.cs.distr.shared.api.remote.ExtHttpInvokerProxyFactoryBean">
+        <property name="serviceUrl" value="http://localhost:9000/remoting/userTransaction"/>
+        <property name="serviceInterface" value="javax.transaction.UserTransaction"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.transaction.jta.JtaTransactionManager"
+          depends-on="rmiTransactionManager, rmiUserTransaction">
+        <property name="transactionManager" ref="rmiTransactionManager"/>
+        <property name="userTransaction" ref="rmiUserTransaction"/>
+        <property name="allowCustomIsolationLevels" value="true"/>
+    </bean>
+
+    <bean id="firstClientService" class="com.cs.distr.shared.api.remote.ExtHttpInvokerProxyFactoryBean">
+        <property name="serviceUrl" value="http://localhost:9000/client1/clientService"/>
+        <property name="serviceInterface" value="com.cs.distr.shared.api.ClientService"/>
+    </bean>
+
+    <bean id="secondClientService" class="com.cs.distr.shared.api.remote.ExtHttpInvokerProxyFactoryBean">
+        <property name="serviceUrl" value="http://localhost:9000/client2/clientService"/>
+        <property name="serviceInterface" value="com.cs.distr.shared.api.ClientService"/>
+    </bean>
+
+    <bean id="zeroService" class="com.cs.distr.api.ClientZeroServiceImpl">
+        <property name="firstService" ref="firstClientService"/>
+        <property name="secondService" ref="secondClientService"/>
+    </bean>
+
+</beans>
